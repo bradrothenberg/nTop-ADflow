@@ -8,7 +8,7 @@ of them, the change broke something. Check these before trusting a new case.
 Confirms ADflow itself, independently of anything in this repo.
 
 ```bash
-ssh 192.168.20.10
+ssh solver-host
 cd ~/adflow_val
 nohup ./run.sh > rb.out 2>&1 &
 ```

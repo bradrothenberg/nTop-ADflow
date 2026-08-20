@@ -6,7 +6,7 @@ no root access. Every workaround below exists because something failed without i
 **Check first whether the stack is already built.** On the reference host it is:
 
 ```bash
-ssh 192.168.20.10
+ssh solver-host
 source ~/mach_env.sh
 python -c "import adflow, pygeo, idwarp, pyspline, baseclasses, pyhyp, cgnsutilities; print('ok')"
 ```

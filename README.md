@@ -26,12 +26,28 @@ for a general part. Optimization is blocked until pyOptSparse is installed.
 Read `CLAUDE.md`. It is the working instruction set, and several failure modes here return
 a plausible wrong number instead of an error.
 
-Reproduce the validated case first:
+### Solver host
+
+ADflow runs on Linux only, so the solve, the extrusion and the adjoint all run on a remote
+Linux machine. This repo calls that machine `solver-host`. It is an **ssh alias, not a
+hostname**: define it once in `~/.ssh/config` and every command below runs verbatim.
+
+```
+Host solver-host
+    HostName <your-solver-host>
+    User <your-user>
+```
+
+The same alias goes in the `remote.host` field of your case YAML, which is where
+`scripts/push.sh` reads it from. The reference machine is 64 cores, 125 GB RAM, RHEL 8.9;
+`docs/BUILD_RHEL.md` is a no-sudo build recipe for it.
+
+### Reproduce the validated case first
 
 ```bash
 uv run --with pyyaml --with numpy --with scipy --with pyvista python scripts/build_case.py cases/agardc_body.yaml
 bash scripts/push.sh agardc_body
-ssh 192.168.20.10 "cd ~/ntop_adflow_cases/agardc_body && ./extrude.sh && ./solve.sh"
+ssh solver-host "cd ~/ntop_adflow_cases/agardc_body && ./extrude.sh && ./solve.sh"
 ```
 
 Offline tests, no solver needed:

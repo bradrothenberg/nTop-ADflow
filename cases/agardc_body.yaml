@@ -82,7 +82,7 @@ gradients:
   k_warn: 100.0         # flag gradients whose cancellation factor exceeds this
 
 remote:
-  host: 192.168.20.10
+  host: solver-host        # ssh alias; define it in ~/.ssh/config. See README, "Solver host".
   dir: ~/ntop_adflow_cases/agardc_body
   np: 8
   mpi_flags: "--mca pml ob1 --mca btl self,vader,tcp"

@@ -47,11 +47,11 @@ bash scripts/push.sh agardc_body
 ```
 
 ```bash
-ssh 192.168.20.10 "cd ~/ntop_adflow_cases/agardc_body && ./extrude.sh"
+ssh solver-host "cd ~/ntop_adflow_cases/agardc_body && ./extrude.sh"
 ```
 
 ```bash
-ssh 192.168.20.10 "cd ~/ntop_adflow_cases/agardc_body && ./solve.sh"
+ssh solver-host "cd ~/ntop_adflow_cases/agardc_body && ./solve.sh"
 ```
 
 Expected: 6144 surface nodes, **0 bad cells**, min quality 0.9154, then
@@ -66,8 +66,16 @@ Full reference table in `docs/VALIDATION.md`.
 
 ## Machines
 
-- **Solver host: `192.168.20.10`** (64 cores, 125 GB RAM, RHEL 8.9). ADflow runs on Linux
-  only. Do not try to build it on Windows.
+- **Solver host: `solver-host`** (the reference machine is 64 cores, 125 GB RAM, RHEL 8.9).
+  `solver-host` is an ssh alias, not a hostname. Define it once in `~/.ssh/config`; every
+  command in this repo then runs verbatim. ADflow runs on Linux only. Do not try to build
+  it on Windows.
+
+  ```
+  Host solver-host
+      HostName <your-solver-host>
+      User <your-user>
+  ```
 - **Windows workstation**: nTop export, geometry measurement, surface generation,
   post-processing. `ntopcl.exe` here is 5.53.2; the Linux host has 5.37.3, and `.ntop`
   files are not backward-openable, so a notebook saved recently must be exported on
@@ -77,7 +85,7 @@ The full ADflow + MACH-Aero stack is **already built** on the solver host. Check
 rebuilding anything:
 
 ```bash
-ssh 192.168.20.10 "source ~/mach_env.sh && python -c 'import adflow, pygeo, idwarp, pyhyp; print(\"ok\")'"
+ssh solver-host "source ~/mach_env.sh && python -c 'import adflow, pygeo, idwarp, pyhyp; print(\"ok\")'"
 ```
 
 If that fails, follow `docs/BUILD_RHEL.md`. It is a no-sudo recipe with every workaround
@@ -174,7 +182,7 @@ code can pick that station for you.
 
 ```bash
 bash scripts/push.sh <name>
-ssh 192.168.20.10 "cd ~/ntop_adflow_cases/<name> && ./extrude.sh"
+ssh solver-host "cd ~/ntop_adflow_cases/<name> && ./extrude.sh"
 ```
 
 **Read the extrusion output.** Bad cells must be **0** and minimum quality about **0.9**.
@@ -184,7 +192,7 @@ the solver. The usual cause is an odd `surface.n`, which puts a grid point on a 
 ### 4. Solve
 
 ```bash
-ssh 192.168.20.10 "cd ~/ntop_adflow_cases/<name> && ./solve.sh"
+ssh solver-host "cd ~/ntop_adflow_cases/<name> && ./solve.sh"
 ```
 
 Writes `results.json`. About 133 s on 8 ranks for a 369k-cell mesh at L2 1e-12.
@@ -200,13 +208,13 @@ Smoke test first. Same code path, loose tolerance, one variable, no finite diffe
 about 2 minutes:
 
 ```bash
-ssh 192.168.20.10 "cd ~/ntop_adflow_cases/<name> && ./smoke.sh"
+ssh solver-host "cd ~/ntop_adflow_cases/<name> && ./smoke.sh"
 ```
 
 Then the full run: 1 solve, 3 adjoints, 6 solves for the verification. About 21 minutes.
 
 ```bash
-ssh 192.168.20.10 "cd ~/ntop_adflow_cases/<name> && ./gradients.sh"
+ssh solver-host "cd ~/ntop_adflow_cases/<name> && ./gradients.sh"
 ```
 
 Writes `gradients.json` and `gradients.npz`.
