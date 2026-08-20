@@ -105,6 +105,32 @@ the error is 0.983. This is a property of the projection, not a bug: the adjoint
 derivative is accurate to about 1 percent everywhere on the body, and cancellation
 amplifies that.
 
+## Level 4: the gradient chain itself, rigid-translation test
+
+The only test here with a **known** answer, so run it first whenever the chain changes.
+Takes about 15 minutes: 1 solve, 3 adjoints, 4 solves.
+
+```bash
+mpirun -np 8 --mca pml ob1 --mca btl self,vader,tcp python diagnostics/rigid_check.py
+```
+
+Measured in this repo:
+
+| Quantity | Expected | Meaning |
+|---|---|---|
+| largest \|adjoint\| for CL and CD | 1.42e-14 | true answer is exactly zero |
+| worst relative difference on CMY | 2.90e-07 | true answer is non-zero and non-trivial |
+| verdict | PASS | node mapping, MPI assembly and resBar seeding all correct |
+
+A closed body translating through a uniform stream cannot change its force coefficients, so
+dCL and dCD must vanish. CMY does change, because the moment reference stays fixed in space
+while the body moves, and that non-zero value is the real check.
+
+Caveat: translation invariance is an identity the discrete adjoint satisfies by
+construction. Passing proves the plumbing is right; it does not prove the surface
+derivative is locally accurate. That is what item 3 in the CLAUDE.md missing-work list
+would settle.
+
 ## What was ruled out, and how
 
 If you see the same 5 to 32 percent gap on a new case, these are already eliminated. Do
