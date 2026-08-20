@@ -67,6 +67,24 @@ with `Bad integer for item 1 in list input`.
 Bad cells must be **0** and minimum quality about **0.9**. A segfault or a metric printed
 as `0.180+309` means the SURFACE topology is wrong. It does not mean the solver is broken.
 
+### Overset assembly, for wings and other lifting surfaces
+Not implemented in this repo. This is the route, taken from
+`MACH-Aero/tutorial/overset/mesh/run_pyhyp.py`:
+
+1. One pyHyp near-body extrusion per component, each with a SHORT `marchDist`. A wing needs
+   its own structured surface; the cubed sphere here cannot make one.
+2. `from cgnsutilities.cgnsutilities import readGrid, combineGrids`, then
+   `combineGrids([...])`.
+3. `.symmZero("y")` if the case is symmetric.
+4. `simpleOCart(nearfield, dhStar, 40.0, nFarfield, "y", 1, farfield)` for the Cartesian
+   background grid.
+5. Combine near field and far field.
+6. ADflow then needs `surfaceFamilyGroups` mapping each component family to `wall`.
+
+The adjoint works on overset meshes, but note that `getSurfaceCoordinates` grows a zipper
+mesh contribution there, so the node-matching logic in `gradients.py` needs re-checking
+before the gradients can be trusted on an overset case.
+
 ## Geometry measurement
 
 ### SILENT: do not measure the body radius at the equator
