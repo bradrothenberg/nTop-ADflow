@@ -1,0 +1,88 @@
+# AGARD-C fuselage, body alone, Mach 0.75.
+#
+# This is the REGRESSION case. Its numbers are measured, not guessed, and
+# scripts/check_surface.py plus docs/VALIDATION.md compare against them. If you change
+# anything in the surface generator or the solver options, run this case first. If the
+# numbers below move, the change broke something.
+#
+#   surface nodes    6144  (6 patches of 32 x 32)
+#   volume cells     369,024
+#   CL               0.0089272430699
+#   CD               0.0423215773527   <- discretization error, NOT physics. See note.
+#   CMY              0.0257158369590   (about xRef = 1.561 m)
+#   solve            166 s on 8 cores to L2 1e-12
+#
+# CD note: the flow model is inviscid and the body is closed, so the true drag is exactly
+# zero at this subcritical Mach number. The number above measures the mesh error. Do not
+# quote it as drag and do not minimize it. See docs/GOTCHAS.md.
+
+name: agardc_body
+
+geometry:
+  # Either export from a notebook, or point at an existing triangulated surface.
+  # notebook: "C:/Users/bradrothenberg/OneDrive - nTop/OUT/parts/AGARD B/AGARD C.ntop"
+  # inputs: {FUSE-Len: 3.102, FUSE-YScale: 1.230, FUSE-ZScale: 1.000}
+  surface_file: "D:/nTop/fun3D-Runs/AGARDB_v5_Fun3D/run_0001.obj"
+
+  # Profile measurement. Read docs/GOTCHAS.md before touching these: measuring at the
+  # equator reads the WING SPAN instead of the body radius.
+  x_nose: 0.010
+  x_tail: 3.112
+  measure_from: 0.015
+  measure_to: 3.105
+  band: 0.05
+  side: bottom          # side of the centreplane band that is clear of wing and fin
+  smooth: 2.0e-6
+  ratio: 1.234          # measured ry/rz; the notebook's FUSE-Y/ZScale give 1.230
+  # Station for the ry/rz cross-check. MUST be clear of the wing: the AGARD-C wing root
+  # leading edge is near x = 1.12, so mid-body reads the wing and gives 2.16 instead.
+  ratio_at_x: 0.60
+
+surface:
+  n: 32                 # points per patch edge. MUST be EVEN. 64 to refine.
+
+extrude:                # pyHyp. These are the values that produced 0 bad cells and
+  N: 65                 # minimum quality 0.915 on this surface. Do not tune them blind.
+  s0: 1.0e-5            # first layer spacing, m
+  marchDist: 50.0       # m
+  ps0: -1.0
+  pGridRatio: -1.0
+  cMax: 3.0
+  epsE: 1.0
+  epsI: 2.0
+  theta: 3.0
+  volCoef: 0.25
+  volBlend: 1.0e-4
+  volSmoothIter: 100
+
+flow:
+  mach: 0.75
+  alpha: 2.0
+  altitude: 10000.0     # m
+  equationType: Euler
+  liftindex: 3          # REQUIRED. 3 = lift along z. See docs/GOTCHAS.md.
+
+reference:
+  areaRef: 0.5          # m2
+  chordRef: 0.5         # m
+  xRef: 1.561           # m, mid-body. Fixed in space; does not move when L changes.
+
+solver:
+  L2Convergence: 1.0e-12
+  adjointL2Convergence: 1.0e-12
+
+gradients:
+  functions: [cl, cd, cmy]
+  design_vars: [L, Sy, Sz]
+  geom_step: 1.0e-3     # step for dX_surf/dp on the generator
+  fd_step:              # step for the verification finite difference on the total
+    L: 1.0e-3
+    Sy: 1.0e-3
+    Sz: 1.0e-3
+  k_warn: 100.0         # flag gradients whose cancellation factor exceeds this
+
+remote:
+  host: 192.168.20.10
+  dir: ~/ntop_adflow_cases/agardc_body
+  np: 8
+  mpi_flags: "--mca pml ob1 --mca btl self,vader,tcp"

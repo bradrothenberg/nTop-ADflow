@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+# Case working directories: meshes, solutions and figures are large and reproducible.
+work/
+*.cgns
+*.fmt
+*.plt
+*.vtu
+*.obj
+*.stl
+*.npz
+verify_*/
+!cases/**/*.yaml
